@@ -7,7 +7,7 @@ const errorHandler = (error, request, response, next) => {
 
   response.status(500);
   response.json({
-    message: error.message,
+    message: "Network problem",
   });
 };
 
