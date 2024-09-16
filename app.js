@@ -1,4 +1,5 @@
 require("dotenv").config();
+const connectDB = require("./config/db");
 const express = require("express");
 const app = express();
 const tourRouter = require("./routes/tourRouter");
@@ -8,6 +9,7 @@ const {
   errorHandler,
 } = require("./middleware/customMiddleware");
 
+connectDB();
 const morgan = require("morgan");
 app.use(morgan("dev"));
 
