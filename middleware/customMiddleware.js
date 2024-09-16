@@ -5,7 +5,8 @@ const unknownEndpoint = (request, response) => {
 const errorHandler = (error, request, response, next) => {
   console.error(error.message);
 
-  response.status(500).json({
+  response.status(500);
+  response.json({
     message: "Network problem",
   });
 };
