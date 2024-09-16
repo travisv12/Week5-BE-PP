@@ -1,57 +1,86 @@
 const Tour = require("../models/tourModel");
+const mongoose = require("mongoose");
 
-// GET /tours
-const getAllTours = (req, res) => {
-  const tours = Tour.getAll();
-  res.json(tours);
+// New GET /tours with try..catch
+const getAllTours = async (req, res) => {
+  try {
+    const tours = await Tour.find({}).sort({ createdAt: -1 });
+    res.status(200).json(tours);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to retrieve tours" });
+  }
 };
 
 // POST /tours
-const createTour = (req, res) => {
-  const newTour = Tour.addOne({ ...req.body }); // Spread the req.body object
-
-  if (newTour) {
-    res.status(201).json(newTour); // 201 Created
-  } else {
-    // Handle error (e.g., failed to create tour)
-    res.status(400).json({ message: "Invalid tour data" });
+const createTour = async (req, res) => {
+  const data = req.body;
+  try {
+    const existingTour = await Tour.findOne({email: `${data.email}`});
+    if (existingTour) {
+      return res.status(400).json({ message: "A tour with this name already exists" });
+    }
+    const newTour = await Tour.create({ ...req.body });
+    res.status(201).json(newTour);
+  } catch (error) {    
+    res.status(500).json({ message: "Failed to create new tour" });
   }
 };
 
 // GET /tours/:tourId
-const getTourById = (req, res) => {
-  const tourId = req.params.tourId;
-  const tour = Tour.findById(tourId);
-  if (tour) {
-    res.json(tour);
-  } else {
-    res.status(404).json({ message: "Tour not found" });
+const getTourById = async (req, res) => {
+  const { tourId } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(tourId)) {
+    return res.status(400).json({ message: "Invalid tour ID" });
+  }
+  try {
+    const tour = await Tour.findById(tourId);
+    if (tour) {
+      res.status(200).json(tour);
+    } else {
+      res.status(404).json({ message: "Tour not found" });
+    }
+  } catch (error) {
+    res.status();
   }
 };
 
 // PUT /tours/:tourId
-const updateTour = (req, res) => {
-  const tourId = req.params.tourId;
-  const updatedTour = Tour.updateOneById(tourId, { ...req.body }); // Spread the req.body object
-
-  if (updatedTour) {
-    res.json(updatedTour);
-  } else {
-    // Handle update failure (e.g., tour not found)
-    res.status(404).json({ message: "Tour not found" });
+const updateTour = async (req, res) => {
+  const { tourId } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(tourId)) {
+    return res.status(400).json({ message: "Invalid tour ID" });
+  }
+  try {
+    const updatedTour = await Tour.findOneAndUpdate(
+      { _id: tourId },
+      { ...req.body },
+      { new: true, overwrite: true }
+    );
+    if (updatedTour) {
+      res.status(200).json(updatedTour);
+    } else {
+      res.status(404).json({ message: "Tour not found" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update tour" });
   }
 };
 
 // DELETE /tours/:tourId
-const deleteTour = (req, res) => {
-  const tourId = req.params.tourId;
-  const isDeleted = Tour.deleteOneById(tourId);
-
-  if (isDeleted) {
-    res.status(204).send(); // 204 No Content
-  } else {
-    // Handle deletion failure (e.g., tour not found)
-    res.status(404).json({ message: "Tour not found" });
+const deleteTour = async (req, res) => {
+  const { tourId } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(tourId)) {
+    return res.status(400).json({ message: "Invalid tour ID" });
+  }
+  try {
+    const deletedTour = await Tour.findOneAndDelete({ _id: tourId });
+    if (deletedTour) {
+      res.status(204).json({ message: "No content" });
+    } else {
+      res.status(404).json({ message: "Tour not found" });
+    }
+  } catch (error) {
+    res.status(500).json("Failed to delete tour");
   }
 };
 
